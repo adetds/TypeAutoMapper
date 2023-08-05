@@ -1,0 +1,22 @@
+{
+    "name": "tds/type-auto-mapper",
+    "description": "Auto map stdClass objects to concrete types",
+    "type": "library",
+    "require": {
+        "php": "^8.1",
+        "jasny/phpdoc-parser": "^1.0"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Tds\\TypeAutoMapper\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "ade",
+            "email": "abruce@thedevelopmentsuite.com"
+        }
+    ],
+    "minimum-stability": "stable"
+}
