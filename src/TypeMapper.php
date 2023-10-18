@@ -1,6 +1,6 @@
 <?php
 
-namespace Tds\TypeAutoMapper;
+namespace App\Util;
 
 use Jasny\PhpdocParser\PhpdocParser;
 use Jasny\PhpdocParser\Set\PhpDocumentor;
@@ -11,23 +11,22 @@ use Jasny\PhpdocParser\Set\PhpDocumentor;
  */
 class TypeMapper
 {
-
-    const API_DATE_FORMAT = 'Y-m-d\TH:i:s';
+    public const API_DATE_FORMAT = 'Y-m-d\TH:i:s';
 
     /**
      * Map an object (stdClass) to another type
      *
-     * Properties of the input object are checked against the target class and copied over, with typing,
+     * Properties of the input object are checked against the target class and copied over, with types if available,
      * into a new instance of the target class.
      *
-     * @param string $typeClass
+     * @param string $targetClass
      * @param object $inputObject
      * @param null $unpackFunction
      * @return mixed
      */
-    public function mapObjectToType(string $typeClass, object $inputObject, $unpackFunction = null) : mixed
+    public function mapObjectToType(string $targetClass, object $inputObject, $unpackFunction = null) : mixed
     {
-        $mappedInstance = new $typeClass;
+        $mappedInstance = new $targetClass;
 
         // Parse type using reflection & cache it
         $index = $this->parseTypeClass($mappedInstance);
@@ -44,10 +43,10 @@ class TypeMapper
 
 
     /**
-     * Map a value to a type. Recursion applied for arrays and classes
+     * Map a value to a type. Recursion for arrays and classes
      *
      * Mapping function looks for specific scalars or types that exist anything else
-     * will be ignored, and logged in debug mode
+     * will be ignored.
      *
      * @param string $type
      * @param $value
@@ -56,9 +55,11 @@ class TypeMapper
     private function mapValue(string $type, $value)
     {
         $mappedValue = null;
+
         switch ($type):
             case "array":
                 if (is_array($value)) {
+                    $mappedValue = [];
                     foreach ($value as $k => $v) {
                         if (gettype($v) == 'object' || gettype($v) == 'array') {
                             $mappedValue[] = $this->mapValue(gettype($v), $v);
@@ -69,20 +70,20 @@ class TypeMapper
                 }
                 break;
             case "string":
-                $mappedValue = (string) $value;
+                $mappedValue = (is_scalar($value) || $value === null) ? (string) $value : null;
                 break;
             case "int":
-                $mappedValue = (int) $value;
+                $mappedValue = (is_scalar($value) || $value === null) ? (int) $value : null;
                 break;
             case "DateTime":
                 $mappedValue = \DateTime::createFromFormat(self::API_DATE_FORMAT, $value);
                 break;
             default:
-
                 // 1 - This is an array of types - recurse
                 if (str_ends_with($type, '[]')) {
                     $type = substr($type,0, -2);
                     $type = str_starts_with($type,'\\') ? $type : '\\' . $type;
+                    $mappedValue = [];
                     foreach($value as $k => $v) {
                         $mappedValue[] = $this->mapObjectToType($type, $v);
                     }
@@ -142,7 +143,7 @@ class TypeMapper
                         }
                     }
                 } else {
-                    // default string
+                    // Default string
                     $index[$reflectionProperty->getName()]  = 'string';
                 }
             }
