@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Util;
+namespace Tds\TypeAutoMapper;
 
 use Jasny\PhpdocParser\PhpdocParser;
 use Jasny\PhpdocParser\Set\PhpDocumentor;
@@ -133,13 +133,17 @@ class TypeMapper
                 $tags = PhpDocumentor::tags();
                 $parser = new PhpdocParser($tags);
                 $meta = $parser->parse($doc);
-
+                
                 if (array_key_exists('var', $meta)) {
                     if (str_ends_with($meta['var']['type'], '[]')) {
                         $class = substr($meta['var']['type'],0,-2);
                         $class = str_starts_with($class,'\\') ? $class : '\\' . $class;
                         if (class_exists($class)) {
                             $index[$reflectionProperty->getName()] = $class . '[]';
+                        }
+                    } else {
+                        if (class_exists($meta['var']['type'])) {
+                            $index[$reflectionProperty->getName()] = $meta['var']['type'];
                         }
                     }
                 } else {
